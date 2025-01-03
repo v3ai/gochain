@@ -68,11 +68,21 @@ func verifyChain(chain blockChain) bool {
 }
 
 
+func verifyBlock(myBlock block) bool {
+
+	if hashBlock(myBlock)[0] == 0 && hashBlock(myBlock)[1] == 0 {
+		return true
+	}
+	
+return false
+
+}
+
 func findNonce(myBlock block) uint64 {
 
 	myBlock.nonce = 0
 
-	for hashBlock(myBlock)[0] != 0 || hashBlock(myBlock)[1] != 0 || hashBlock(myBlock)[2] != 0 {
+	for hashBlock(myBlock)[0] != 0 || hashBlock(myBlock)[1] != 0 {
 		myBlock.nonce += 1
 	}
 
@@ -91,16 +101,22 @@ func main(){
 	genisisBlock := block{[32]byte{}, 0, time.Time.String(time.Now()), 0 }	
 	genisisBlock.nonce = findNonce(genisisBlock)
 	
-	chain.blocks = append(chain.blocks, genisisBlock)
-	fmt.Printf("The Genisis Block:     %x, Block index: %d, Time: %s, Nonce: %d \n", genisisBlock.prevBlockHash, genisisBlock.blockIndex, genisisBlock.timestamp, genisisBlock.nonce)
+	if verifyBlock(genisisBlock){
+		chain.blocks = append(chain.blocks, genisisBlock)
+		fmt.Printf("The Genisis Block:     %x, Block index: %d, Time: %s, Nonce: %d \n", genisisBlock.prevBlockHash, genisisBlock.blockIndex, genisisBlock.timestamp, genisisBlock.nonce)
+	}
+	
 
 	for i := 1; i <= 100; i++ {
 	
 		newblock := block{hashBlock(chain.blocks[i-1]), uint64(i), time.Time.String(time.Now()), 0}	
 		newblock.nonce = findNonce(newblock)
-		
-		chain.blocks = append(chain.blocks, newblock)	
-		fmt.Printf("Previous Block's hash: %x, Block index: %d, Time: %s, Nonce: %d\n", chain.blocks[i].prevBlockHash, chain.blocks[i].blockIndex,  chain.blocks[i].timestamp, chain.blocks[i].nonce)
+
+		if verifyBlock(newblock){
+			chain.blocks = append(chain.blocks, newblock)	
+			fmt.Printf("Previous Block's hash: %x, Block index: %d, Time: %s, Nonce: %d\n", chain.blocks[i].prevBlockHash, chain.blocks[i].blockIndex,  chain.blocks[i].timestamp, chain.blocks[i].nonce)
+
+		}
 	}
 
 	// verify the chain
