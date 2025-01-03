@@ -75,7 +75,7 @@ func main(){
 	var chain blockChain
 
 // Init and seed Genisis Block
-	x := [32]byte{255}	
+	x := [32]byte{}	
 	rand.Seed(time.Now().UnixNano())
 	
 	for i := 0; i < 32; i++ {
