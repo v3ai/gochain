@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"encoding/binary"
 	"crypto/sha256"
-	"math/rand"
 	"time"
 )
 
@@ -13,6 +12,7 @@ type block struct {
 
 	prevBlockHash 	[32]byte
 	blockIndex 		uint64
+	timestamp 		string
 	nonce			uint64
 	
 }
@@ -44,6 +44,7 @@ func blockToByteSlice(myBlock block) []byte {
 	allBytes := []byte{}
 	allBytes = append(allBytes, myBlock.prevBlockHash[:]...)
 	allBytes = append(allBytes, uint64ToByteSlice(myBlock.blockIndex)...)
+	allBytes = append(allBytes, []byte(myBlock.timestamp)...)
 	allBytes = append(allBytes, uint64ToByteSlice(myBlock.nonce)...)
 
 	return allBytes	
@@ -67,6 +68,18 @@ func verifyChain(chain blockChain) bool {
 }
 
 
+func findNonce(myBlock block) uint64 {
+
+	myBlock.nonce = 0
+
+	for hashBlock(myBlock)[0] != 0 || hashBlock(myBlock)[1] != 0 || hashBlock(myBlock)[2] != 0 {
+		myBlock.nonce += 1
+	}
+
+	return myBlock.nonce
+	
+}
+
 
 func main(){
 
@@ -75,28 +88,22 @@ func main(){
 	var chain blockChain
 
 // Init and seed Genisis Block
-	x := [32]byte{}	
-	rand.Seed(time.Now().UnixNano())
+	genisisBlock := block{[32]byte{}, 0, time.Time.String(time.Now()), 0 }	
+	genisisBlock.nonce = findNonce(genisisBlock)
 	
-	for i := 0; i < 32; i++ {
-		x[i] = byte(rand.Intn(255))
-	}
-	
-	x[27] = 'r'
-	x[28] = 'h'
-	x[29] = 'e'
-	x[30] = 't'
-	x[31] = 't'
-	
-	genisisBlock := block{x, 0, 0 }	
 	chain.blocks = append(chain.blocks, genisisBlock)
+	fmt.Printf("The Genisis Block:     %x, Block index: %d, Time: %s, Nonce: %d \n", genisisBlock.prevBlockHash, genisisBlock.blockIndex, genisisBlock.timestamp, genisisBlock.nonce)
 
-
-	for i := 0; i <= 1000; i++ {
-		newblock := block{hashBlock(chain.blocks[i]), uint64(i+1), 0}	
+	for i := 1; i <= 100; i++ {
+	
+		newblock := block{hashBlock(chain.blocks[i-1]), uint64(i), time.Time.String(time.Now()), 0}	
+		newblock.nonce = findNonce(newblock)
+		
 		chain.blocks = append(chain.blocks, newblock)	
-		fmt.Printf("Previous Block hash: %x, Block index: %d, Nonce: %d\n", chain.blocks[i].prevBlockHash,chain.blocks[i].blockIndex,chain.blocks[i].nonce)
+		fmt.Printf("Previous Block's hash: %x, Block index: %d, Time: %s, Nonce: %d\n", chain.blocks[i].prevBlockHash, chain.blocks[i].blockIndex,  chain.blocks[i].timestamp, chain.blocks[i].nonce)
 	}
+
+	// verify the chain
 
 	if verifyChain(chain){
 		fmt.Println("\nBlockchain is validated")
